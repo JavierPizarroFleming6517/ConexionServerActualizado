@@ -1,7 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using WebSocketSharp;
 using TMPro;
+using System.Collections.Generic;
 
 //Clases y varialbes para los mensajes que entran 
 [System.Serializable]
@@ -32,12 +33,34 @@ public class OutgoingData
     public string message;
 }
 
+[System.Serializable]
+public class ClientRequest
+{
+    public string @event;
+}
+
+
+[System.Serializable]
+public class PlayerListMessageWrapper
+{
+    public string eventName;
+    public string[] data;
+}
+
+
+
+
+
+
+
 public class ChatManager : MonoBehaviour
 {
     //definir mas variables
+    public TextMeshProUGUI UserListText;
     public TextMeshProUGUI chatText;//texto de la UI
     public TMP_InputField messageInput;//resivir texto en la UI
     public ScrollRect chatScrollRect;//el cuadro con el scroll para bajar y ver los mensajes
+    private List<string> connectedPlayers = new List<string>();
 
     private WebSocket ws;//instanciamos igual websocket para hacer la conexion websocket con el server
     private string myId = "";//para guardar el id nuestro 
@@ -61,15 +84,18 @@ public class ChatManager : MonoBehaviour
         messageInput.onSubmit.AddListener(SendChatMessage);//hace al presionar enter envie el mensaje
     }
 
-    private void OnWebSocketOpen(object sender, System.EventArgs e)//la funcion que salta cuando el evento OnOpen se activa
+    private void OnWebSocketOpen(object sender, System.EventArgs e)
     {
-        UnityMainThreadDispatcher.Enqueue(() =>//esto lo que hace es poner en cola lo que esta abajo 
+        UnityMainThreadDispatcher.Enqueue(() =>
         {
-            chatText.text += "\n[Conectado al servidor]";//osea esto wea, mandar un mensaje al chatText en nuestra UI
+            chatText.text += "\n[Conectado al servidor]";
+            Debug.Log("🔁 Pidiendo jugadores conectados...");
+            PedirJugadoresConectados();
         });
     }
 
-    private void OnWebSocketMessage(object sender, MessageEventArgs e)//y esta es la que salta cuando el evento OnMessage se activa
+
+    private void OnWebSocketMessage(object sender, MessageEventArgs e)
     {
         UnityMainThreadDispatcher.Enqueue(() =>
         {
@@ -77,60 +103,85 @@ public class ChatManager : MonoBehaviour
 
             try
             {
-                // Ajustamos el JSON para que se pueda deserializar
-                string json = e.Data.Replace("\"event\":", "\"eventName\":");//con esto cambiamos JSON en "event" por que event es una funcion de c# entonces lo cambiamos a eventName
-                ServerMessage serverMessage = JsonUtility.FromJson<ServerMessage>(json);//con el fromJson hacemos que el JSON sea una clase con atributos publicos del tipo serverMessage y asi podemos acceder a ellos (lo usamos para los if de abajo para saber el event name)
+                // Reemplazamos "event" por "eventName" para evitar conflictos con C#
+                string json = e.Data.Replace("\"event\":", "\"eventName\":");
 
-                //Dependiendo del evento que arroje el servidor mandamos mensajes a la UI
+                // DEBUG: Mostrar JSON recibido
+                Debug.Log("JSON recibido ajustado: " + json);
+
+                if (json.Contains("get-connected-players"))//esto se debe hacer asi por que el json viene con un array y no podemos usarlo como serverMessage
+                {
+                    PlayerListMessageWrapper playerList = JsonUtility.FromJson<PlayerListMessageWrapper>(json);
+
+
+                    if (playerList.data != null && playerList.data.Length > 0)
+
+                    {
+
+                        connectedPlayers.AddRange(playerList.data); // Guardar los jugadores conectados
+                        if (myId != "")
+                        {
+                            ActualizarListaUsuariosUI();
+                        }
+
+                    }
+                    return;
+                }
+
+                // Deserializar mensaje general
+                ServerMessage serverMessage = JsonUtility.FromJson<ServerMessage>(json);
+
                 if (serverMessage.eventName == "connected-to-server")
                 {
-                    chatText.text += $"\n[Servidor]: {serverMessage.data.msg}";//es .data.msg por que en el json primero accedemos a data y dentro de data esta id y msg,
-                    myId = serverMessage.data.id; // Guardar mi propio ID, es para que no me mande mensajes con mi id cuando yo hago algo(no me interesa que me diga cuando me desconecte yo por ejemplo)
-                    ActualizarChatUI();
+                    chatText.text += $"\n[Servidor]: {serverMessage.data.msg}";
+                    myId = serverMessage.data.id;
 
+
+                    ActualizarChatUI();
                 }
+                
+                
+
+                
                 else if (serverMessage.eventName == "player-connected")
                 {
                     if (serverMessage.data.id != myId)
                     {
+                        connectedPlayers.Add(serverMessage.data.id); // Agregar nuevo jugador
                         chatText.text += $"\n[+] {serverMessage.data.msg}";
+                        ActualizarListaUsuariosUI();
                         ActualizarChatUI();
-
                     }
                 }
-                else if(serverMessage.eventName== "player-disconnected")
+                else if (serverMessage.eventName == "player-disconnected")
                 {
                     if (serverMessage.data.id != myId)
                     {
+                        connectedPlayers.Remove(serverMessage.data.id); // Eliminar jugador
                         chatText.text += $"\n[-] {serverMessage.data.msg}";
+                        ActualizarListaUsuariosUI();
                         ActualizarChatUI();
 
                     }
                 }
                 else if (serverMessage.eventName == "public-message")
                 {
-                    // Solo mostrar mensajes de otros jugadores
                     if (serverMessage.data.id != myId)
                     {
                         chatText.text += $"\n{serverMessage.data.id}: {serverMessage.data.msg}";
                         ActualizarChatUI();
-
                     }
                 }
-                else
-                {
-                    // Otros eventos desconocidos pueden ignorarse o manejarse aqu�
-                }
 
-                
             }
-            catch
+            catch (System.Exception ex)
             {
-                // No mostrar mensajes desconocidos
+                Debug.LogError("Error al procesar mensaje del servidor: " + ex.Message);
             }
-            
+
         });
     }
+
 
     private void ActualizarChatUI()
     {
@@ -140,6 +191,35 @@ public class ChatManager : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(chatScrollRect.content);
         chatScrollRect.verticalNormalizedPosition = 0f;
     }
+
+    private void ActualizarListaUsuariosUI()
+    {
+        UserListText.text = "";//limpia lo anterior
+
+        UserListText.text += $"\n Tú : {myId}";
+        foreach (string id in connectedPlayers)
+        {
+            if (id != myId) // Evitar mostrar el propio ID dos veces
+            {
+                UserListText.text += $"\n Usuario: {id}";
+            }
+        }
+    }
+
+
+    public void PedirJugadoresConectados()
+    {
+        ClientRequest request = new ClientRequest
+        {
+            @event = "get-connected-players",
+        };
+
+        string json = JsonUtility.ToJson(request);
+        Debug.Log("📤 Enviado al servidor (get-connected-players): " + json);
+        ws.Send(json);
+
+    }
+
 
 
     public void SendChatMessage(string msg)
@@ -159,7 +239,7 @@ public class ChatManager : MonoBehaviour
             Debug.Log("Enviado al servidor: " + json);//print
             ws.Send(json);//hacemos la peticion al server para enviar un mensaje json 
 
-            chatText.text += $"\nT�: {msg}";//mostramos el msg desde la clase ServerData
+            chatText.text += $"\nTú: {msg}";//mostramos el msg desde la clase ServerData
             Canvas.ForceUpdateCanvases();//hacemos el update en la UI de los cambios
             chatScrollRect.verticalNormalizedPosition = 0f;//bajamos el scroll
 
@@ -168,11 +248,12 @@ public class ChatManager : MonoBehaviour
     }
 
     void OnApplicationQuit()
+
     {
         if (ws != null && ws.IsAlive)
         {
             ws.Close();
-            Debug.Log("Conexi�n WebSocket cerrada al salir del juego.");
+            Debug.Log("Conexión WebSocket cerrada al salir del juego.");
         }
     }
 }
