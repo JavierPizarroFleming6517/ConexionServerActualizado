@@ -161,7 +161,11 @@ public class ChatManager : MonoBehaviour
     {
         UnityMainThreadDispatcher.Enqueue(() =>
         {
+<<<<<<< HEAD
             chatText.text += "\n Conectado al servidor";
+=======
+            chatText.text += "\nConectado al servidor";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
         });
     }
 
@@ -295,7 +299,11 @@ public class ChatManager : MonoBehaviour
                     PlayersReadyMessage readyMessage = JsonUtility.FromJson<PlayersReadyMessage>(json);
                     string matchId = readyMessage.data.matchId;
 
+<<<<<<< HEAD
                     chatText.text += $"\n Ambos jugadores están listos. Partida ID: {matchId}";
+=======
+                    chatText.text += $"\n✔️ Ambos jugadores están listos. Partida ID: {matchId}";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
                     roomButton.gameObject.SetActive(false);
                     pingButton.gameObject.SetActive(true);
 
@@ -304,11 +312,19 @@ public class ChatManager : MonoBehaviour
                 }
                 else if (serverMessage.eventName == "ping-match")
                 {
+<<<<<<< HEAD
                     chatText.text += "\n Ping recibido correctamente. Esperando al otro jugador...";
                 }
                 else if (serverMessage.eventName == "match-start")
                 {
                     chatText.text += "\n ¡La partida ha comenzado!";
+=======
+                    chatText.text += "\n📶 Ping recibido correctamente. Esperando al otro jugador...";
+                }
+                else if (serverMessage.eventName == "match-start")
+                {
+                    chatText.text += "\n🚀 ¡La partida ha comenzado!";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
 
                     // Puedes cargar escena o desactivar botones aquí
                     pingButton.gameObject.SetActive(false);
@@ -352,7 +368,11 @@ public class ChatManager : MonoBehaviour
             };
 
             ws.Send(JsonUtility.ToJson(outgoing));
+<<<<<<< HEAD
             chatText.text += $"\n Tú: {msg}";
+=======
+            chatText.text += $"\nTú: {msg}";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
             ActualizarChatUI();
             messageInput.text = "";
         }
@@ -367,7 +387,11 @@ public class ChatManager : MonoBehaviour
         };
 
         ws.Send(JsonUtility.ToJson(request));
+<<<<<<< HEAD
         chatText.text += $"\n Invitación enviada a {playerName}";
+=======
+        chatText.text += $"\nInvitación enviada a {playerName}";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
         ActualizarChatUI();
     }
 
@@ -375,7 +399,11 @@ public class ChatManager : MonoBehaviour
     {
         var message = new SimpleEvent { @event = "accept-match" };
         ws.Send(JsonUtility.ToJson(message));
+<<<<<<< HEAD
         chatText.text += "\n Has aceptado la partida.";
+=======
+        chatText.text += "\nHas aceptado la partida.";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
         ActualizarChatUI();
     }
 
@@ -383,7 +411,11 @@ public class ChatManager : MonoBehaviour
     {
         var message = new SimpleEvent { @event = "reject-match" };
         ws.Send(JsonUtility.ToJson(message));
+<<<<<<< HEAD
         chatText.text += "\n Has rechazado la partida.";
+=======
+        chatText.text += "\nHas rechazado la partida.";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
         ActualizarChatUI();
     }
 
@@ -404,7 +436,11 @@ public class ChatManager : MonoBehaviour
         Debug.Log("Enviando connect-match: " + json);
         ws.Send(json);
 
+<<<<<<< HEAD
         chatText.text += "\n Te estás conectando a la partida...";
+=======
+        chatText.text += "\n🔗 Te estás conectando a la partida...";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
         ActualizarChatUI();
 
         roomButton.gameObject.SetActive(false);
@@ -417,7 +453,11 @@ public class ChatManager : MonoBehaviour
         Debug.Log("Enviando ping-match: " + json);
         ws.Send(json);
 
+<<<<<<< HEAD
         chatText.text += "\n Enviando ping para sincronizar...";
+=======
+        chatText.text += "\n📱 Enviando ping para sincronizar...";
+>>>>>>> a8f2e73ee5a595d876deddc43cd3bf147d6d847e
         ActualizarChatUI();
     }
 
