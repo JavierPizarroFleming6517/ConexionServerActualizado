@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90102423c8b578649b887d4da1807e92, type: 3}
+  m_Name: Card Shooter uPGRADE
+  m_EditorClassIdentifier: 
+  upgrade: {fileID: 7520956117608121446, guid: 0ae50d896aa863b429e886f72ccf0ee4, type: 3}
+  UpgradeType: 3
+  Name: Carta cortante
+  icon: {fileID: 5990415780787779188, guid: 1e6b2dc07615a6e43a434f8e6d16d2e1, type: 3}
+  currentLevel: 2
+  cooldownDuration: 0
+  cooldownRemaining: 0
